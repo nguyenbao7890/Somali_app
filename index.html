@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Somali - Quản lý gia sư</title>
+<meta name="description" content="Công cụ quản lý lịch học, học sinh và học phí cho gia sư">
+<meta name="theme-color" content="#FDEEF3">
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Somali">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="deco-bg" id="deco-bg"></div>
+
+<!-- Loading khi kiểm tra đăng nhập -->
+<div id="boot-loading" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:var(--pink-bg); z-index:999;">
+  <img src="assets/logo.png" alt="Somali" style="height:56px; opacity:0.85;">
+</div>
+
+<!-- Auth screen -->
+<div class="auth-screen" id="auth-screen" style="display:none;">
+  <div class="auth-card">
+    <img src="assets/logo.png" alt="Somali">
+    <h2>Chào bạn</h2>
+    <p class="auth-tagline">What's up bro? This is Nguyen Thi Thu Huong's website.</p>
+    <div class="auth-tabs">
+      <button id="auth-tab-signin" class="active">Đăng nhập</button>
+      <button id="auth-tab-signup">Đăng ký</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="field" style="text-align:left;">
+      <label>Email</label>
+      <input type="email" id="auth-email" placeholder="ban@email.com">
+    </div>
+    <div class="field" style="text-align:left;">
+      <label>Mật khẩu</label>
+      <input type="password" id="auth-password" placeholder="Ít nhất 6 ký tự">
+    </div>
+    <button class="btn btn-primary btn-block" id="auth-submit-btn">Đăng nhập</button>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell-root" style="display:none;">
+
+  <!-- Sidebar (desktop) -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Somali">
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-view="dashboard"><i class="ti ti-home"></i> Trang chủ</div>
+      <div class="nav-item" data-view="calendar"><i class="ti ti-calendar"></i> Lịch học</div>
+      <div class="nav-item" data-view="students"><i class="ti ti-users"></i> Học sinh</div>
+    </nav>
+    <div style="flex:1;"></div>
+    <div class="nav-item settings-trigger"><i class="ti ti-settings"></i> Cài đặt</div>
+    <div class="sync-indicator" style="padding:10px 12px;"><span class="dot-live"></span> Đã đồng bộ</div>
+  </aside>
+
+  <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+
+    <!-- Top bar (mobile) -->
+    <div class="topbar">
+      <div class="brand"><img src="assets/logo.png" alt="Somali"></div>
+      <div class="header-actions">
+        <button class="icon-btn notification-trigger" id="notification-btn-mobile" aria-label="Thông báo"><i class="ti ti-bell"></i></button>
+        <button class="icon-btn settings-trigger" aria-label="Cài đặt tài khoản"><i class="ti ti-settings"></i></button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <div class="app-toolbar">
+        <div><span class="toolbar-kicker">Somali workspace</span><strong id="toolbar-display-name">Xin chào</strong></div>
+        <div class="header-actions">
+          <button class="icon-btn notification-trigger" id="notification-btn" aria-label="Thông báo" title="Thông báo"><i class="ti ti-bell"></i><span class="notification-dot" hidden></span></button>
+          <button class="account-trigger settings-trigger" aria-label="Cài đặt tài khoản" title="Cài đặt tài khoản"><span class="avatar avatar-sm" id="header-avatar">?</span><span class="account-name" id="header-account-name">Tài khoản</span><i class="ti ti-chevron-down"></i></button>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <section class="view active" id="view-dashboard">
+        <div class="greeting-row">
+          <div>
+            <h2 style="margin-top:0.5rem;">Xin chào, <span id="dashboard-display-name">bạn</span></h2>
+            <p style="color:var(--pink-text); font-size:14px;">Đây là tổng quan hôm nay của bạn.</p>
+          </div>
+          <div class="greeting-mascot" id="greeting-mascot"></div>
+        </div>
+
+        <div class="stat-grid" style="margin-top:1rem;">
+          <div class="stat-card">
+            <div class="label">Buổi hôm nay</div>
+            <div class="value" id="dash-today-count">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Học sinh</div>
+            <div class="value" id="dash-student-count">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Thu nhập tháng</div>
+            <div class="value" id="dash-income">0đ</div>
+          </div>
+        </div>
+
+        <div class="desktop-columns" style="margin-top:0.5rem;">
+          <div>
+            <div class="section-title">Lịch hôm nay</div>
+            <div class="card" id="dash-today-list"></div>
+          </div>
+          <div>
+            <div class="section-title">Học phí còn nợ</div>
+            <div class="card" id="dash-owed-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CALENDAR -->
+      <section class="view" id="view-calendar">
+        <div class="desktop-columns">
+          <div>
+            <div class="cal-header">
+              <div class="icon-btn" id="cal-prev"><i class="ti ti-chevron-left"></i></div>
+              <div class="month-label" id="cal-month-label">Th1 2026</div>
+              <div class="icon-btn" id="cal-next"><i class="ti ti-chevron-right"></i></div>
+            </div>
+            <div class="card">
+              <div class="cal-grid" id="cal-grid"></div>
+            </div>
+          </div>
+          <div>
+            <div class="section-title"><span id="cal-day-label">Buổi học</span></div>
+            <div class="card" id="cal-day-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENTS -->
+      <section class="view" id="view-students">
+        <h2 style="margin-top:0.5rem;">Học sinh</h2>
+        <div class="field" style="margin-top:0.75rem;">
+          <input type="text" id="student-search" placeholder="Tìm học sinh...">
+        </div>
+        <div class="card" id="students-list"></div>
+      </section>
+
+      <!-- STUDENT DETAIL -->
+      <section class="view" id="view-student-detail">
+        <div class="icon-btn" id="sd-back-btn" onclick="closeStudentDetail()" style="margin-bottom:0.75rem;"><i class="ti ti-arrow-left"></i></div>
+
+        <div class="card" style="display:flex; align-items:center; gap:14px;">
+          <div class="avatar" id="sd-avatar" style="width:56px;height:56px;font-size:19px;"></div>
+          <div style="flex:1;">
+            <h3 style="margin:0;" id="sd-name"></h3>
+            <div style="font-size:13px; color:var(--pink-text);" id="sd-subject"></div>
+            <div style="font-size:13px; color:var(--pink-text-dark); margin-top:2px; font-weight:600;" id="sd-fee"></div>
+          </div>
+        </div>
+
+        <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr); margin-top:0.75rem;">
+          <div class="stat-card">
+            <div class="label">Tổng buổi đã học</div>
+            <div class="value" id="sd-total-sessions">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Tổng học phí</div>
+            <div class="value" id="sd-total-income">0đ</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Còn nợ</div>
+            <div class="value" id="sd-owed">0đ</div>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <span id="sd-note-month-label">Nhận xét tháng</span>
+        </div>
+        <div class="card">
+          <textarea id="sd-note-text" placeholder="Nhận xét về tình hình học tập trong tháng..." style="width:100%; border:none; background:transparent; resize:vertical; min-height:90px; font-size:14px; color:var(--navy); font-family:var(--font-body);"></textarea>
+          <button class="btn btn-secondary btn-block" style="margin-top:0.5rem;" onclick="saveStudentNote()">Lưu nhận xét</button>
+        </div>
+
+        <div class="section-title">Lịch sử buổi học</div>
+        <div class="card" id="sd-history"></div>
+
+        <button class="btn btn-secondary btn-block" style="margin-top:1.5rem;" onclick="exportStudentPdfReport()">
+          <i class="ti ti-file-download"></i> Xuất báo cáo PDF
+        </button>
+        <button class="btn btn-secondary btn-block" style="margin-top:0.6rem; color:#A32D2D;" onclick="deleteCurrentStudent()">
+          <i class="ti ti-trash"></i> Xóa học sinh
+        </button>
+      </section>
+
+    </main>
+
+    <!-- Bottom nav (mobile) -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" data-view="dashboard"><i class="ti ti-home"></i>Trang chủ</div>
+      <div class="nav-item" data-view="calendar"><i class="ti ti-calendar"></i>Lịch học</div>
+      <div class="nav-item" data-view="students"><i class="ti ti-users"></i>Học sinh</div>
+    </nav>
+
+  </div>
+</div>
+
+<button class="fab" id="fab-add" aria-label="Thêm mới" title="Thêm mới" style="display:none;"><i class="ti ti-plus"></i></button>
+
+<!-- Add student sheet -->
+<div class="overlay" id="overlay-add-student">
+  <div class="sheet">
+    <div class="sheet-header">
+      <h3>Thêm học sinh</h3>
+      <div class="icon-btn" onclick="closeAddStudentSheet()"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field">
+      <label>Tên học sinh</label>
+      <input type="text" id="as-name" placeholder="Nguyễn Văn A">
+    </div>
+    <div class="field">
+      <label>Môn học</label>
+      <input type="text" id="as-subject" placeholder="Toán, Tiếng Anh...">
+    </div>
+    <div class="field">
+      <label>Học phí / buổi (đ)</label>
+      <input type="number" id="as-fee" placeholder="200000">
+    </div>
+    <div class="field">
+      <label>Số điện thoại phụ huynh (tùy chọn)</label>
+      <input type="text" id="as-phone" placeholder="09xxxxxxxx">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="submitAddStudent()">Thêm học sinh</button>
+  </div>
+</div>
+
+<!-- Add session sheet -->
+<div class="overlay" id="overlay-add-session">
+  <div class="sheet">
+    <div class="sheet-header">
+      <h3>Thêm buổi học</h3>
+      <div class="icon-btn" onclick="closeAddSessionSheet()"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="field">
+      <label>Học sinh</label>
+      <select id="ss-student"></select>
+    </div>
+    <div class="field">
+      <label>Ngày học</label>
+      <input type="date" id="ss-date">
+    </div>
+    <div class="field">
+      <label>Giờ học</label>
+      <input type="time" id="ss-time">
+    </div>
+    <button class="btn btn-primary btn-block" onclick="submitAddSession()">Thêm buổi học</button>
+  </div>
+</div>
+
+<!-- Session detail sheet -->
+<div class="overlay" id="overlay-session-detail">
+  <div class="sheet">
+    <div class="sheet-header">
+      <h3 id="sh-student-name">Buổi học</h3>
+      <div class="icon-btn" onclick="closeSessionSheet()"><i class="ti ti-x"></i></div>
+    </div>
+    <p style="color:var(--pink-text); font-size:14px; margin-top:-6px;" id="sh-datetime"></p>
+    <div class="field">
+      <label>Trạng thái</label>
+      <select id="sh-status">
+        <option value="scheduled">Sắp tới</option>
+        <option value="completed">Hoàn thành</option>
+        <option value="cancelled">Đã hủy</option>
+      </select>
+    </div>
+    <div class="field" style="display:flex; align-items:center; gap:8px;">
+      <input type="checkbox" id="sh-paid" style="width:auto;">
+      <label style="margin:0;" for="sh-paid">Đã thanh toán</label>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="saveSessionChanges()">Lưu thay đổi</button>
+    <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="exportSessionToIcs()">
+      <i class="ti ti-calendar-plus"></i> Thêm vào Lịch điện thoại (nhắc trước 30 phút)
+    </button>
+    <button class="btn btn-secondary btn-block" style="margin-top:8px; color:#A32D2D;" onclick="deleteActiveSession()">
+      <i class="ti ti-trash"></i> Xóa buổi học
+    </button>
+  </div>
+</div>
+
+<!-- Settings sheet -->
+<div class="overlay" id="overlay-settings">
+  <div class="sheet">
+    <div class="sheet-header">
+      <h3>Cài đặt</h3>
+      <div class="icon-btn" onclick="closeSettingsSheet()"><i class="ti ti-x"></i></div>
+    </div>
+    <p style="font-size:13px; color:var(--pink-text); margin-top:-6px;">Đăng nhập với <span id="settings-email" style="font-weight:600; color:var(--pink-text-dark);"></span></p>
+
+    <div class="card account-settings-card">
+      <div class="profile-preview"><span class="avatar avatar-lg" id="settings-avatar">?</span><div><strong id="settings-display-preview">Tài khoản</strong><span>Thông tin tài khoản</span></div></div>
+      <div class="field"><label for="settings-display-name">Tên hiển thị</label><input type="text" id="settings-display-name" placeholder="Nguyễn Thị Thu Hường"></div>
+      <div class="field"><label for="settings-avatar-file">Ảnh đại diện</label><input type="file" id="settings-avatar-file" accept="image/png,image/jpeg,image/webp"></div>
+      <div class="field"><label for="settings-new-password">Mật khẩu mới</label><input type="password" id="settings-new-password" placeholder="Để trống nếu không đổi"></div>
+      <button class="btn btn-primary btn-block" id="settings-profile-save"><i class="ti ti-device-floppy"></i> Lưu thông tin tài khoản</button>
+    </div>
+
+    <div class="card" style="margin-top:0.5rem;">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Nhắc lịch học</div>
+          <div class="toggle-sub">Thông báo khi sắp đến giờ dạy</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="settings-reminder-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field" style="margin-top:0.6rem; margin-bottom:0;">
+        <label>Nhắc trước</label>
+        <select id="settings-reminder-minutes">
+          <option value="15">15 phút</option>
+          <option value="30">30 phút</option>
+          <option value="60">60 phút</option>
+        </select>
+      </div>
+    </div>
+
+    <p style="font-size:12px; color:var(--pink-text); margin-top:0.8rem;">
+      Lưu ý: thông báo hoạt động khi app đang mở. Để nhắc lịch chắc chắn kể cả khi tắt app, hãy dùng nút "Thêm vào Lịch điện thoại" ở mỗi buổi học.
+    </p>
+
+    <button class="btn btn-secondary btn-block" style="margin-top:1.2rem;" id="settings-signout-btn">
+      <i class="ti ti-logout"></i> Đăng xuất
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/vendor/jspdf.umd.min.js"></script>
+<script src="js/vendor/jspdf-autotable.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/store.js"></script>
+<script src="js/pdf-font.js"></script>
+<script src="js/mascots.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
