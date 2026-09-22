@@ -1,17 +1,38 @@
-const CACHE_NAME = 'somali-cache-v3';
-const ASSETS_TO_CACHE = [
+// Tăng số này (v4 -> v5 -> ...) MỖI LẦN bạn deploy có đổi bất kỳ
+// file nào trong ASSETS_TO_CACHE (đặc biệt app.js/store.js/session-domain.mjs).
+// Đây là cách duy nhất để buộc trình duyệt của người dùng cũ dọn
+// cache cũ và tải bản mới — nếu quên tăng số này, code mới sẽ không
+// bao giờ tới tay người dùng dù Netlify đã deploy thành công.
+const CACHE_NAME = 'somali-cache-v4';
+
+// Các file "core" (HTML/manifest/icon): cache-first, ít đổi, ưu tiên
+// tốc độ + chạy offline được.
+const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './css/style.css',
-  './js/store.js',
-  './js/app.js',
-  './js/session-domain.mjs',
   './assets/logo.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
 ];
+
+// Các file code hay thay đổi theo tính năng mới: luôn ưu tiên lấy
+// bản mới nhất từ mạng trước, chỉ dùng cache khi mất mạng.
+const NETWORK_FIRST_ASSETS = [
+  './css/style.css',
+  './js/store.js',
+  './js/app.js',
+  './js/config.js',
+  './js/mascots.js',
+  './js/session-domain.mjs',
+];
+
+const ASSETS_TO_CACHE = [...CORE_ASSETS, ...NETWORK_FIRST_ASSETS];
+
+function isNetworkFirst(url) {
+  return NETWORK_FIRST_ASSETS.some((path) => url.endsWith(path.replace('./', '/')));
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,13 +52,35 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
 
+  // Network-first: file code — luôn thử lấy bản mới nhất trước,
+  // chỉ rơi về cache khi offline. Nhờ vậy tính năng mới hiện ra
+  // ngay lần mở app kế tiếp có mạng, không cần đợi người dùng
+  // xóa cache thủ công.
+  if (isNetworkFirst(url.pathname)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first: file tĩnh ít đổi — ưu tiên tốc độ/offline.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request)
         .then((response) => {
-          if (response.ok && event.request.url.startsWith(self.location.origin)) {
+          if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
