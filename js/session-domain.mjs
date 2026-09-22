@@ -45,6 +45,13 @@ export function sumSessionFees(sessions, fallbackFee = 0) {
   return sessions.reduce((sum, session) => sum + Number(session.feeAmount ?? fallbackFee ?? 0), 0);
 }
 
+export function buildNewSessionDefaults(overrides = {}) {
+  return {
+    status: overrides.status ?? 'completed',
+    paid: overrides.paid ?? true,
+  };
+}
+
 export function buildPaymentQrUrl(settings) {
   if (!settings?.bank || !settings?.accountNumber) return null;
   return `https://img.vietqr.io/image/${encodeURIComponent(settings.bank)}-${encodeURIComponent(settings.accountNumber)}-compact2.png?accountName=${encodeURIComponent(settings.accountName || '')}`;
@@ -55,6 +62,7 @@ if (typeof window !== 'undefined') {
     buildRecurringDates,
     selectOutstandingCompletedSessions,
     sumSessionFees,
+    buildNewSessionDefaults,
     buildPaymentQrUrl,
   };
 }

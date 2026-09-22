@@ -444,18 +444,19 @@ async function submitAddSession() {
   const dates = window.SomaliSessionDomain.buildRecurringDates({ startDate: date, endDate, frequency });
   if (!dates.length) { showToast('Khoảng ngày lặp không hợp lệ'); return; }
   try {
+    const defaults = window.SomaliSessionDomain.buildNewSessionDefaults();
     await Store.addSessions(dates.map((sessionDate) => ({
       studentId,
       date: sessionDate,
       time,
-      status: 'completed',
+      ...defaults,
       seriesFrequency: frequency,
     })));
     closeAddSessionSheet();
     state.calSelectedDate = date;
     if (state.view === 'calendar') renderCalendar();
     if (state.view === 'dashboard') renderDashboard();
-    showToast(dates.length > 1 ? `Đã thêm ${dates.length} buổi học hoàn thành` : 'Đã thêm buổi học hoàn thành');
+    showToast(dates.length > 1 ? `Đã thêm ${dates.length} buổi học · hoàn thành và đã thanh toán` : 'Đã thêm buổi học · hoàn thành và đã thanh toán');
   } catch (e) {
     showToast(friendlyError(e));
   }

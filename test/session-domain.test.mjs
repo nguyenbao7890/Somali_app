@@ -5,7 +5,14 @@ import {
   selectOutstandingCompletedSessions,
   sumSessionFees,
   buildPaymentQrUrl,
+  buildNewSessionDefaults,
 } from '../js/session-domain.mjs';
+
+test('defaults newly created sessions to completed and paid while preserving overrides', () => {
+  assert.deepEqual(buildNewSessionDefaults(), { status: 'completed', paid: true });
+  assert.deepEqual(buildNewSessionDefaults({ status: 'scheduled' }), { status: 'scheduled', paid: true });
+  assert.deepEqual(buildNewSessionDefaults({ paid: false }), { status: 'completed', paid: false });
+});
 
 test('builds inclusive weekly dates without dates after the end', () => {
   assert.deepEqual(buildRecurringDates({

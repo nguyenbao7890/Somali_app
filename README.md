@@ -6,7 +6,7 @@ PWA (Progressive Web App) quản lý lịch học, học sinh, học phí, nhậ
 
 1. Tạo tài khoản miễn phí tại https://supabase.com
 2. Tạo project mới (đặt tên tùy ý, chọn vùng **Singapore** cho tốc độ tốt), đợi ~1-2 phút để khởi tạo
-3. Vào **SQL Editor** → **New query** → copy toàn bộ nội dung file `supabase_schema.sql` → dán vào → nhấn **Run**. Bước này tạo sẵn các bảng dữ liệu và bảo mật theo tài khoản. Nếu đã chạy schema cũ, hãy chạy lại file để thêm các cột `sessions.fee_amount`, `sessions.series_id`, `sessions.series_frequency` và thông tin thanh toán trong `user_settings`.
+3. Vào **SQL Editor** → **New query** → copy toàn bộ nội dung file `supabase_schema.sql` → dán vào → nhấn **Run**. Bước này tạo sẵn các bảng dữ liệu và bảo mật theo tài khoản. Nếu đã chạy schema cũ, chạy thêm migration `supabase_migrations/20260922_desktop_auto_paid_fixed_schedule.sql`; migration này chỉ thêm các cột/index còn thiếu và không xóa hay đổi dữ liệu cũ.
 4. Vào **Project Settings > API**, copy **Project URL** và **anon public key**
 5. Mở file `js/config.js`, dán 2 giá trị đó vào `SUPABASE_URL` và `SUPABASE_ANON_KEY`
 6. Vào **Authentication > Providers**, đảm bảo **Email** đang bật (mặc định đã bật sẵn)
@@ -59,7 +59,7 @@ Nếu có tài khoản GitHub, đẩy thư mục lên 1 repo rồi bật GitHub 
 
 - **Đăng nhập / Đăng ký**: chỉ 1 lần mỗi thiết bị, tự động nhớ đăng nhập cho các lần sau
 - **Trang chủ**: buổi học hôm nay, số học sinh, thu nhập tháng, danh sách học phí còn nợ
-- **Lịch học**: nội dung buổi học hiển thị trực tiếp trên từng ô ngày (giờ + tên học sinh, kiểu Google Calendar), buổi mới tự động hoàn thành, có thể tạo lịch lặp theo ngày/tuần/tháng, sửa hoặc hủy từng buổi hay cả chuỗi
+- **Lịch học**: nội dung buổi học hiển thị trực tiếp trên từng ô ngày (giờ + tên học sinh, kiểu Google Calendar), buổi mới tự động hoàn thành và đã thanh toán, có thể tạo lịch lặp theo ngày/tuần/tháng trong khoảng ngày chọn, sửa hoặc hủy từng buổi hay cả chuỗi
 - **Học sinh**: danh sách, tìm kiếm, chi tiết từng học sinh gồm lịch sử buổi học, công nợ tự tính, nhận xét theo tháng
 - **Thanh toán gộp**: trong chi tiết học sinh có thể thanh toán toàn bộ các buổi đã hoàn thành còn nợ bằng một lần bấm
 - **Báo cáo PDF**: nút "Xuất báo cáo PDF" trong trang chi tiết học sinh — luôn đọc dữ liệu mới nhất, xuất họ tên, SĐT, môn học, học phí, toàn bộ lịch sử buổi học, nhận xét từng tháng và QR thanh toán cùng thông tin tài khoản hiện tại
