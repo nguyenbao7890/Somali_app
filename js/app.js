@@ -1081,7 +1081,13 @@ async function bootApp() {
 
   renderDecoBackground();
   document.getElementById('greeting-mascot').innerHTML = mascotSvg('wave', 72);
-  applyProfile(await Store.getUser());
+  try {
+    applyProfile(await Store.getUser());
+  } catch (e) {
+    // Lỗi lấy thông tin tài khoản (mạng chập chờn, token cần refresh...)
+    // không được phép chặn cả app - vẫn cho vào dashboard bình thường.
+    console.error('Không lấy được thông tin tài khoản:', e);
+  }
   navigate('dashboard');
 
   Store.subscribeRealtime(() => refreshCurrentView());
@@ -1135,17 +1141,43 @@ function initStaticListeners() {
   }
 }
 
+// Bọc 1 promise với thời gian chờ tối đa: nếu quá `ms` mà chưa xong
+// (mạng treo, không lỗi cũng không trả kết quả), sẽ tự "thua" thay vì
+// treo vô thời hạn.
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-shell-root').style.display = 'none';
+  document.getElementById('fab-add').style.display = 'none';
+}
+
 async function init() {
   initStaticListeners();
-  const session = await Store.getSession();
-  if (session) {
-    await bootApp();
-  } else {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-shell-root').style.display = 'none';
-    document.getElementById('fab-add').style.display = 'none';
+  try {
+    // Tối đa 10s để kiểm tra phiên đăng nhập + tải app; quá thời gian
+    // này (mạng chập chờn/treo) sẽ rơi về màn hình đăng nhập thay vì
+    // kẹt mãi ở màn hình logo.
+    const session = await withTimeout(Store.getSession(), 10000);
+    if (session) {
+      await withTimeout(bootApp(), 10000);
+    } else {
+      showAuthScreen();
+    }
+  } catch (err) {
+    console.error('Khởi động app thất bại:', err);
+    showAuthScreen();
+    showToast('Không tải được dữ liệu. Vui lòng kiểm tra kết nối mạng và thử lại.');
+  } finally {
+    // finally đảm bảo dù thành công, lỗi, hay timeout, splash screen
+    // LUÔN LUÔN được ẩn đi - đây là điểm mấu chốt sửa lỗi kẹt màn hình.
+    document.getElementById('boot-loading').style.display = 'none';
   }
-  document.getElementById('boot-loading').style.display = 'none';
 }
 
 document.addEventListener('DOMContentLoaded', init);
