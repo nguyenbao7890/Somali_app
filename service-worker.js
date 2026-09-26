@@ -3,7 +3,7 @@
 // Đây là cách duy nhất để buộc trình duyệt của người dùng cũ dọn
 // cache cũ và tải bản mới — nếu quên tăng số này, code mới sẽ không
 // bao giờ tới tay người dùng dù Netlify đã deploy thành công.
-const CACHE_NAME = 'somali-cache-v4';
+const CACHE_NAME = 'somali-cache-v5';
 
 // Các file "core" (HTML/manifest/icon): cache-first, ít đổi, ưu tiên
 // tốc độ + chạy offline được.
